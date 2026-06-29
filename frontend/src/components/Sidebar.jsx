@@ -11,7 +11,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 
 function Sidebar() {
   const navigate = useNavigate();
-
+  const user = JSON.parse(localStorage.getItem("user"));
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/");
@@ -27,7 +27,7 @@ function Sidebar() {
   return (
     <aside className="w-64 min-h-screen bg-slate-950 text-white p-6 hidden md:flex flex-col justify-between">
       <div>
-        <h1 className="text-3xl font-bold mb-10 text-blue-400">PPFM</h1>
+        <h1 className="text-3xl font-bold mb-10 text-blue-400">📒 Life Ledger</h1>
 
         <nav className="space-y-3">
           <NavLink to="/dashboard" className={linkClass}>
@@ -56,7 +56,7 @@ function Sidebar() {
         <div className="flex items-center gap-3 mb-5">
           <FaUserCircle className="text-3xl text-slate-400" />
           <div>
-            <p className="font-semibold">User</p>
+            <p className="font-semibold"><h3>{user?.name || "User"}</h3></p>
             <p className="text-xs text-slate-400">PPFM Account</p>
           </div>
         </div>

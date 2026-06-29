@@ -45,6 +45,7 @@ const registerUser = (req, res) => {
         }
     );
 };
+
 const loginUser = async (req, res) => {
     const { email, password } = req.body;
     const query = `
@@ -52,45 +53,47 @@ const loginUser = async (req, res) => {
     FROM users
     WHERE email = ?
     `;
-    db.query(
-        query,
-        [email],
-        async (err, result) => {
-            if(err) {
-                console.log(err);
-                return res.status(500).json({
-                    message: "Database Error"
-                });
-            }
-            if(result.length == 0) {
-                return res.status(400).json({
-                    message: "User Not Found"
-                });
-            }
-            const storedPassword = result[0].password;
-            const isMatch = await bcrypt.compare(password, storedPassword);
-            if(!isMatch) {
-                return res.status(400).json({
-                    message: "Invalid Password"
-                });
-            }
-            const token = jwt.sign(
-                {
-                    id: result[0].id, 
-                    email: result[0].email
-                },
-                process.env.JWT_SECRET,
-                {
-                    expiresIn: "7d"
-                }
-            )
-            return res.status(200).json({
-                message: "Login SuccessFul",
-                token: token
+    db.query(query, [email], async (err, result) => {
+        if (err) {
+            console.log(err);
+            return res.status(500).json({
+                message: "Database Error",
             });
         }
-    );
-}
+        if (result.length === 0) {
+            return res.status(400).json({
+                message: "User Not Found",
+            });
+        }
+        const user = result[0];
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({
+                message: "Invalid Password",
+            });
+        }
+        const token = jwt.sign(
+            {
+                id: user.id,
+                email: user.email,
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: "7d",
+            }
+        );
+        return res.status(200).json({
+            message: "Login Successful",
+            token,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+            },
+        });
+    });
+};
+
 module.exports = {
     registerUser,
     loginUser

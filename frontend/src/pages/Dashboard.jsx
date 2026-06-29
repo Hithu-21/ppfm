@@ -22,6 +22,9 @@ function Dashboard() {
   const [dashboardData, setDashboardData] = useState(null);
   const [error, setError] = useState("");
 
+  const user = JSON.parse(localStorage.getItem("user"));
+  const userName = user?.name || "User";
+
   const fetchDashboard = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -47,6 +50,13 @@ function Dashboard() {
   useEffect(() => {
     fetchDashboard();
   }, []);
+
+  const greeting =
+    new Date().getHours() < 12
+      ? `🌅 Good Morning, ${userName}!`
+      : new Date().getHours() < 17
+      ? `☀️ Good Afternoon, ${userName}!`
+      : `🌙 Good Evening, ${userName}!`;
 
   if (error) {
     return (
@@ -74,13 +84,7 @@ function Dashboard() {
   return (
     <DashboardLayout>
       <div className="mb-8">
-        <h1 className="text-4xl font-bold">
-          {new Date().getHours() < 12
-            ? "🌅 Good Morning!"
-            : new Date().getHours() < 17
-            ? "☀️ Good Afternoon!"
-            : "🌙 Good Evening!"}
-        </h1>
+        <h1 className="text-4xl font-bold">{greeting}</h1>
 
         <p className="text-lg text-gray-600 mt-2">
           {new Date().toLocaleDateString("en-IN", {

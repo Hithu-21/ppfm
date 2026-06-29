@@ -6,6 +6,7 @@ import Expenses from "./pages/Expenses";
 import Income from "./pages/Income";
 import Tasks from "./pages/Tasks";
 import Habits from "./pages/Habits";
+import Register from "./pages/Register";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
       <Route path="/income" element={<Income />} />
       <Route path="/tasks" element={<Tasks />} />
       <Route path="/habits" element={<Habits />} />
+      <Route path="/register" element={<Register />} />
     </Routes>
   );
 }
