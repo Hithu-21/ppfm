@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+
 import DashboardLayout from "../layouts/DashboardLayout";
 import IncomeTable from "../components/income/IncomeTable";
 import IncomeModal from "../components/income/IncomeModal";
+import ConfirmModal from "../components/ConfirmModal";
 
 import {
   getIncomes,
@@ -18,6 +21,9 @@ function Income() {
   const [editMode, setEditMode] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+
   const [formData, setFormData] = useState({
     amount: "",
     source: "",
@@ -30,7 +36,7 @@ function Income() {
       setIncomes(response.data);
     } catch (err) {
       console.log(err);
-      alert("Failed to fetch income records");
+      toast.error("Failed to fetch income records");
     } finally {
       setLoading(false);
     }
@@ -83,30 +89,42 @@ function Income() {
     try {
       if (editMode) {
         await updateIncome(editingId, formData);
+        toast.success("Income updated successfully");
       } else {
         await addIncome(formData);
+        toast.success("Income added successfully");
       }
 
       closeModal();
       fetchIncomes();
     } catch (err) {
-      alert(err.response?.data?.message || "Operation failed");
+      toast.error(err.response?.data?.message || "Operation failed");
     }
   };
 
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this income record?"
-    );
+  const handleDeleteClick = (id) => {
+    setDeleteId(id);
+    setShowDeleteModal(true);
+  };
 
-    if (!confirmDelete) return;
-
+  const confirmDelete = async () => {
     try {
-      await deleteIncome(id);
+      await deleteIncome(deleteId);
+
+      toast.success("Income deleted successfully");
+
+      setShowDeleteModal(false);
+      setDeleteId(null);
+
       fetchIncomes();
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to delete income");
+      toast.error(err.response?.data?.message || "Failed to delete income");
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setDeleteId(null);
   };
 
   return (
@@ -129,7 +147,7 @@ function Income() {
         incomes={incomes}
         loading={loading}
         onEdit={openEditModal}
-        onDelete={handleDelete}
+        onDelete={handleDeleteClick}
       />
 
       {showModal && (
@@ -139,6 +157,15 @@ function Income() {
           handleSubmit={handleSubmit}
           closeModal={closeModal}
           editMode={editMode}
+        />
+      )}
+
+      {showDeleteModal && (
+        <ConfirmModal
+          title="Delete Income"
+          message="Are you sure you want to delete this income record? This action cannot be undone."
+          onCancel={cancelDelete}
+          onConfirm={confirmDelete}
         />
       )}
     </DashboardLayout>

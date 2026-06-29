@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+
 import DashboardLayout from "../layouts/DashboardLayout";
 import TaskTable from "../components/tasks/TaskTable";
 import TaskModal from "../components/tasks/TaskModal";
+import ConfirmModal from "../components/ConfirmModal";
 
 import {
   getTasks,
@@ -20,6 +23,9 @@ function Tasks() {
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editingId, setEditingId] = useState(null);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -42,7 +48,7 @@ function Tasks() {
       setTasks(response.data);
     } catch (err) {
       console.log(err);
-      alert("Failed to fetch tasks");
+      toast.error("Failed to fetch tasks");
     } finally {
       setLoading(false);
     }
@@ -55,6 +61,7 @@ function Tasks() {
   const openAddModal = () => {
     setEditMode(false);
     setEditingId(null);
+
     setFormData({
       title: "",
       description: "",
@@ -62,6 +69,7 @@ function Tasks() {
       priority: "MEDIUM",
       status: "PENDING",
     });
+
     setShowModal(true);
   };
 
@@ -99,14 +107,16 @@ function Tasks() {
     try {
       if (editMode) {
         await updateTask(editingId, formData);
+        toast.success("Task updated successfully");
       } else {
         await addTask(formData);
+        toast.success("Task added successfully");
       }
 
       closeModal();
       fetchTasks();
     } catch (err) {
-      alert(err.response?.data?.message || "Operation failed");
+      toast.error(err.response?.data?.message || "Operation failed");
     }
   };
 
@@ -116,25 +126,36 @@ function Tasks() {
         status: "COMPLETED",
       });
 
+      toast.success("Task marked as completed");
       fetchTasks();
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to update task");
+      toast.error(err.response?.data?.message || "Failed to update task");
     }
   };
 
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this task?"
-    );
+  const handleDeleteClick = (id) => {
+    setDeleteId(id);
+    setShowDeleteModal(true);
+  };
 
-    if (!confirmDelete) return;
-
+  const confirmDelete = async () => {
     try {
-      await deleteTask(id);
+      await deleteTask(deleteId);
+
+      toast.success("Task deleted successfully");
+
+      setShowDeleteModal(false);
+      setDeleteId(null);
+
       fetchTasks();
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to delete task");
+      toast.error(err.response?.data?.message || "Failed to delete task");
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setDeleteId(null);
   };
 
   return (
@@ -192,7 +213,7 @@ function Tasks() {
         tasks={tasks}
         loading={loading}
         onEdit={openEditModal}
-        onDelete={handleDelete}
+        onDelete={handleDeleteClick}
         onComplete={handleComplete}
       />
 
@@ -203,6 +224,15 @@ function Tasks() {
           handleSubmit={handleSubmit}
           closeModal={closeModal}
           editMode={editMode}
+        />
+      )}
+
+      {showDeleteModal && (
+        <ConfirmModal
+          title="Delete Task"
+          message="Are you sure you want to delete this task? This action cannot be undone."
+          onCancel={cancelDelete}
+          onConfirm={confirmDelete}
         />
       )}
     </DashboardLayout>

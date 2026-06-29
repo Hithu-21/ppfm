@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+
 import DashboardLayout from "../layouts/DashboardLayout";
 import ExpenseTable from "../components/expenses/ExpenseTable";
 import ExpenseModal from "../components/expenses/ExpenseModal";
+import ConfirmModal from "../components/ConfirmModal";
 
 import {
   getExpenses,
@@ -18,6 +21,9 @@ function Expenses() {
   const [editMode, setEditMode] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+
   const [formData, setFormData] = useState({
     amount: "",
     category: "",
@@ -31,7 +37,7 @@ function Expenses() {
       setExpenses(response.data);
     } catch (err) {
       console.log(err);
-      alert("Failed to fetch expenses");
+      toast.error("Failed to fetch expenses");
     } finally {
       setLoading(false);
     }
@@ -44,12 +50,14 @@ function Expenses() {
   const openAddModal = () => {
     setEditMode(false);
     setEditingId(null);
+
     setFormData({
       amount: "",
       category: "",
       description: "",
       date: "",
     });
+
     setShowModal(true);
   };
 
@@ -86,30 +94,44 @@ function Expenses() {
     try {
       if (editMode) {
         await updateExpense(editingId, formData);
+        toast.success("Expense updated successfully");
       } else {
         await addExpense(formData);
+        toast.success("Expense added successfully");
       }
 
       closeModal();
       fetchExpenses();
     } catch (err) {
-      alert(err.response?.data?.message || "Operation failed");
+      toast.error(err.response?.data?.message || "Operation failed");
     }
   };
 
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this expense?"
-    );
+  const handleDeleteClick = (id) => {
+    setDeleteId(id);
+    setShowDeleteModal(true);
+  };
 
-    if (!confirmDelete) return;
-
+  const confirmDelete = async () => {
     try {
-      await deleteExpense(id);
+      await deleteExpense(deleteId);
+
+      toast.success("Expense deleted successfully");
+
+      setShowDeleteModal(false);
+      setDeleteId(null);
+
       fetchExpenses();
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to delete expense");
+      toast.error(
+        err.response?.data?.message || "Failed to delete expense"
+      );
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setDeleteId(null);
   };
 
   return (
@@ -117,7 +139,10 @@ function Expenses() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-4xl font-bold mb-2">Expenses</h1>
-          <p className="text-gray-500">View and manage all your expenses.</p>
+
+          <p className="text-gray-500">
+            View and manage all your expenses.
+          </p>
         </div>
 
         <button
@@ -132,7 +157,7 @@ function Expenses() {
         expenses={expenses}
         loading={loading}
         onEdit={openEditModal}
-        onDelete={handleDelete}
+        onDelete={handleDeleteClick}
       />
 
       {showModal && (
@@ -142,6 +167,15 @@ function Expenses() {
           handleSubmit={handleSubmit}
           closeModal={closeModal}
           editMode={editMode}
+        />
+      )}
+
+      {showDeleteModal && (
+        <ConfirmModal
+          title="Delete Expense"
+          message="Are you sure you want to delete this expense? This action cannot be undone."
+          onCancel={cancelDelete}
+          onConfirm={confirmDelete}
         />
       )}
     </DashboardLayout>
